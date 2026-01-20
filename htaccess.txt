@@ -17,6 +17,9 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^api/(.*)$ api/index.php [QSA,L]
 
+    # Internal redirect for uploads
+    RewriteRule ^uploads/(.*)$ public/uploads/$1 [L]
+
     # Serve static files directly (including uploads/)
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
@@ -91,14 +94,25 @@
 # ============================================
 
 <IfModule mod_headers.c>
+    # Prevent clickjacking
     Header set X-Frame-Options "SAMEORIGIN"
+    
+    # Prevent MIME type sniffing
     Header set X-Content-Type-Options "nosniff"
+    
+    # Enable XSS protection
     Header set X-XSS-Protection "1; mode=block"
+    
+    # Referrer Policy
     Header set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # CORS Headers
     Header set Access-Control-Allow-Origin "*"
     Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
     Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-CSRF-Token, X-Requested-With"
     Header set Access-Control-Allow-Credentials "true"
+    
+    # Remove server signature
     Header unset Server
     Header unset X-Powered-By
 </IfModule>
@@ -108,16 +122,25 @@
 # ============================================
 
 <IfModule mod_mime.c>
+    # JavaScript
     AddType application/javascript js
     AddType application/json json
+    
+    # Audio
     AddType audio/mpeg mp3
     AddType audio/wav wav
     AddType audio/ogg ogg
     AddType audio/webm webm
+    
+    # Video
     AddType video/mp4 mp4
     AddType video/webm webm
+    
+    # Images
     AddType image/svg+xml svg svgz
     AddType image/webp webp
+    
+    # Fonts
     AddType font/woff woff
     AddType font/woff2 woff2
     AddType font/ttf ttf
@@ -134,6 +157,7 @@
     AddOutputFilterByType DEFLATE application/javascript application/x-javascript
     AddOutputFilterByType DEFLATE text/xml application/xml application/json text/plain
     AddOutputFilterByType DEFLATE image/svg+xml
+    
     BrowserMatch ^Mozilla/4 gzip-only-text/html
     BrowserMatch ^Mozilla/4\.0[678] no-gzip
     BrowserMatch \bMSIE !no-gzip !gzip-only-text/html
@@ -174,17 +198,21 @@
 # Directory Protection
 # ============================================
 
+# Disable directory browsing
 Options -Indexes
 
+# Deny access to hidden files
 <FilesMatch "^\.">
     Require all denied
 </FilesMatch>
 
+# Protect .htaccess
 <Files ~ "^\.ht">
     Require all denied
 </Files>
 
-<Directory "public/uploads">
+# Disable PHP execution in uploads directory
+<Directory "uploads">
     <FilesMatch "\.php$">
         Require all denied
     </FilesMatch>
@@ -196,6 +224,7 @@ Options -Indexes
 
 ServerSignature Off
 
+# Prevent access to version control
 <DirectoryMatch "\.git">
     Require all denied
 </DirectoryMatch>
