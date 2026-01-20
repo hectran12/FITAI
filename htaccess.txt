@@ -1,0 +1,220 @@
+# ============================================
+# FitAI .htaccess - Flat Structure
+# ============================================
+
+# Enable Rewrite Engine
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Force HTTPS (uncomment in production with SSL)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Route API requests to api/index.php
+    RewriteCond %{REQUEST_URI} ^/api/
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^api/(.*)$ api/index.php [QSA,L]
+
+    # Serve static files directly (including uploads/)
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Route all other requests to index.html (SPA)
+    RewriteRule ^(.*)$ index.html [QSA,L]
+</IfModule>
+
+# ============================================
+# CRITICAL: Protect Sensitive Directories
+# ============================================
+
+<DirectoryMatch "^.*/db/">
+    Require all denied
+</DirectoryMatch>
+
+<DirectoryMatch "^.*/ai/">
+    Require all denied
+</DirectoryMatch>
+
+<DirectoryMatch "^.*/docs/">
+    Require all denied
+</DirectoryMatch>
+
+<DirectoryMatch "^.*/vendor/">
+    Require all denied
+</DirectoryMatch>
+
+# ============================================
+# Protect Sensitive Files
+# ============================================
+
+<FilesMatch "^\.env">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "^composer\.(json|lock)$">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "^package(-lock)?\.json$">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "^\.git">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "\.sql$">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "\.(md|markdown)$">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "\.py$">
+    Require all denied
+</FilesMatch>
+
+<Files "config.php">
+    Require all denied
+</Files>
+
+<Files "db.php">
+    Require all denied
+</Files>
+
+# ============================================
+# Security Headers
+# ============================================
+
+<IfModule mod_headers.c>
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-CSRF-Token, X-Requested-With"
+    Header set Access-Control-Allow-Credentials "true"
+    Header unset Server
+    Header unset X-Powered-By
+</IfModule>
+
+# ============================================
+# MIME Types
+# ============================================
+
+<IfModule mod_mime.c>
+    AddType application/javascript js
+    AddType application/json json
+    AddType audio/mpeg mp3
+    AddType audio/wav wav
+    AddType audio/ogg ogg
+    AddType audio/webm webm
+    AddType video/mp4 mp4
+    AddType video/webm webm
+    AddType image/svg+xml svg svgz
+    AddType image/webp webp
+    AddType font/woff woff
+    AddType font/woff2 woff2
+    AddType font/ttf ttf
+    AddType font/otf otf
+    AddType application/vnd.ms-fontobject eot
+</IfModule>
+
+# ============================================
+# Compression (Gzip)
+# ============================================
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript
+    AddOutputFilterByType DEFLATE application/javascript application/x-javascript
+    AddOutputFilterByType DEFLATE text/xml application/xml application/json text/plain
+    AddOutputFilterByType DEFLATE image/svg+xml
+    BrowserMatch ^Mozilla/4 gzip-only-text/html
+    BrowserMatch ^Mozilla/4\.0[678] no-gzip
+    BrowserMatch \bMSIE !no-gzip !gzip-only-text/html
+    Header append Vary User-Agent
+</IfModule>
+
+# ============================================
+# Browser Caching
+# ============================================
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access plus 1 hour"
+    ExpiresByType text/html "access plus 0 seconds"
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType audio/mpeg "access plus 1 month"
+    ExpiresByType video/mp4 "access plus 1 month"
+</IfModule>
+
+# ============================================
+# PHP Settings
+# ============================================
+
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 300
+    php_value max_input_time 300
+    php_value memory_limit 256M
+</IfModule>
+
+# ============================================
+# Directory Protection
+# ============================================
+
+Options -Indexes
+
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+<Files ~ "^\.ht">
+    Require all denied
+</Files>
+
+<Directory "public/uploads">
+    <FilesMatch "\.php$">
+        Require all denied
+    </FilesMatch>
+</Directory>
+
+# ============================================
+# Additional Security
+# ============================================
+
+ServerSignature Off
+
+<DirectoryMatch "\.git">
+    Require all denied
+</DirectoryMatch>
+
+# ============================================
+# Performance
+# ============================================
+
+<IfModule mod_headers.c>
+    Header set Connection keep-alive
+</IfModule>
+
+LimitRequestBody 10485760
+
+# ============================================
+# Character Encoding
+# ============================================
+
+AddDefaultCharset UTF-8
+<IfModule mod_mime.c>
+    AddCharset UTF-8 .html .css .js .xml .json .rss .atom
+</IfModule>
